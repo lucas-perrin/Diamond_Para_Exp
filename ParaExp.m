@@ -1,4 +1,4 @@
-function [X_para,time] = ParaExp(p,tspan,M,G,x0)
+function [X_para,time] = ParaExp(order,p,tspan,M,G,x0)
 
     Type_2_expm = true;
 
@@ -20,8 +20,8 @@ function [X_para,time] = ParaExp(p,tspan,M,G,x0)
     
     %----- Interval definition
         
-        deb       = 1*(iter==1) + (iter-1)*size_int*(iter > 1);
-        fin       = iter*size_int;
+        deb = 1*(iter==1) + (iter-1)*size_int*(iter > 1);
+        fin = iter*size_int;
         if iter == p
             fin = length(tspan);
         end
@@ -29,7 +29,7 @@ function [X_para,time] = ParaExp(p,tspan,M,G,x0)
         
     %----- Type 1
                 
-        [~,X_T1_p] = odeRK4_inhom_ufunc(M,G,time_interval,ini_zero);        
+        [~,X_T1_p] = odeRK_inhom_ufunc(order,M,G,time_interval,ini_zero);        
         X_para(:,deb:fin) = X_para(:,deb:fin) + X_T1_p;
         
         if iter < p
@@ -42,7 +42,7 @@ function [X_para,time] = ParaExp(p,tspan,M,G,x0)
     
     %----- Interval definition
         
-        deb       = 1*(iter==1) + (iter-1)*size_int*(iter > 1);
+        deb = 1*(iter==1) + (iter-1)*size_int*(iter > 1);
         if Type_2_expm
             time_interval_till_end_from_zero = tspan(deb:end) - tspan(deb);
         else
@@ -55,7 +55,7 @@ function [X_para,time] = ParaExp(p,tspan,M,G,x0)
         if Type_2_expm
             [X_T2_p] = expm_prop(M,time_interval_till_end_from_zero,x0p(:,iter));
         else
-            [~,X_T2_p] = odeRK4_inhom_ufunc(M,@(t) zeros(mx,1),time_interval_till_end_from_zero,x0p(:,iter));
+            [~,X_T2_p] = odeRK_inhom_ufunc(order,M,@(t) zeros(mx,1),time_interval_till_end_from_zero,x0p(:,iter));
         end
                 
         X_para(:,deb+1:end) = X_para(:,deb+1:end) + X_T2_p(:,2:end);

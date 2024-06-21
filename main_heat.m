@@ -16,7 +16,7 @@ fontSize = 16;
 %===============================================================
 % if true, runs a loop to find the upper and lower bounds of the
 % nested grids 
-test_nested_grids = false;
+test_nested_grids = true;
 % if true, runs a test to see if the defined observer converges
 % at the expected convergence rate
 test_obs_conv = false;
@@ -31,6 +31,8 @@ test_ParaExp_end = false;
 %===============================================================
 % Tunable parameters
 fprintf('\nSetting parameters... \n')
+
+order = 2;
 
 h = 0.1; % grid discretization
 p = 4; % number of computers
@@ -113,31 +115,46 @@ if test_nested_grids
 
     fprintf('    Doing loop... \n')
 
-    for i = 0:12
+    for i = 0:16
         dt_i = dt_1/(2^i);
-        fprintf("    i = %d \n",i)
+        fprintf("      i = %d \n",i)
         tspan_i = 0:dt_i:10;
         X_sol_i = Solvetspan(X,tspan_i);
-        [~,X_RK4_i] = odeRK4_inhom_ufunc(A,G,tspan_i,x0(:));
+        [~,X_RK4_i] = odeRK_inhom_ufunc(order,A,G,tspan_i,x0(:));
         error_end   = [error_end, norm(X_RK4_i(:,end)-X_sol_i(:,end))];
         error_tot   = [error_tot, sum(vecnorm(X_RK4_i - X_sol_i))];
         dt_s        = [dt_s, dt_i];
     end
 
-    deb = find(~isnan(error_end), 1);
+    deb_pow_grid = find(~isnan(error_end), 1);
+    fprintf(['      deb_pow_grid = ',num2str(deb_pow_grid)])
 
     fprintf('    Plotting... \n')
 
     figure(1)
-    loglog(dt_s(deb:end),error_end(deb:end),...
-        dt_s(deb:end),error_tot(deb:end),...
-        dt_s(deb:end),dt_s(deb:end).^3,...
-        dt_s(deb:end),dt_s(deb:end).^4)
+    loglog(dt_s(deb_pow_grid:end),error_end(deb_pow_grid:end),...
+        dt_s(deb_pow_grid:end),error_tot(deb_pow_grid:end),...
+        dt_s(deb_pow_grid:end),dt_s(deb_pow_grid:end).^2,...
+        dt_s(deb_pow_grid:end),dt_s(deb_pow_grid:end).^3,...
+        dt_s(deb_pow_grid:end),dt_s(deb:end).^4)
     title('Error convergence of RK4 method (mx = 9)')
-    legend('error end','error total','dt^3','dt^4')
+    legend('error end','error total','dt^2','dt^3','dt^4')
     annotation('textbox', [0.2, 0.2, 0.1, 0.1], 'String', sprintf("On prend : dt_ min = 1e-1/(2^ 6) and dt_ max = 1e-1/(2^ 10)"))
     grid on
 end
+
+%===============================================================
+% Nested grids setting
+fprintf('\nSetting nested grids... \n')
+
+if order==4
+    deb_pow_grid = 6;
+    end_pow_grid = 10;
+elseif order==2
+    deb_pow_grid = 6;
+    end_pow_grid = 15;
+end
+
 
 %===============================================================
 % Observer Setting
@@ -191,14 +208,14 @@ if test_obs_conv
 
     fprintf("    Computing with dt min = 1/(2 6)... \n")
 
-    [~,X_hat_min] = odeRK4_inhom_ufunc(M,Gobs,tspan_min,x0obs(:));
+    [~,X_hat_min] = odeRK_inhom_ufunc(orderM,Gobs,tspan_min,x0obs(:));
 
     dt_max    = (1e-1)/(2^10);
     tspan_max = 0:dt_max:Tf;
 
     fprintf("    Computing with dt max = 1/(2 10)... \n")
 
-    [~,X_hat_max] = odeRK4_inhom_ufunc(M,Gobs,tspan_max,x0obs(:));
+    [~,X_hat_max] = odeRK_inhom_ufunc(order,M,Gobs,tspan_max,x0obs(:));
 
     fprintf("    Plotting... \n")
 
@@ -221,12 +238,12 @@ if test_ParaExp
     
     fprintf("    Computing ParaExp with dt max = 1/(2 10)... \n")
 
-    [X_hat_para_max,time_para_test] = ParaExp(p,tspan_max,M,Gobs,x0obs(:));
+    [X_hat_para_max,time_para_test] = ParaExp(order,p,tspan_max,M,Gobs,x0obs(:));
 
     fprintf("    Computing serial with dt max = 1/(2 10)... \n")
 
     tic;
-    [~,X_hat_max] = odeRK4_inhom_ufunc(M,Gobs,tspan_max,x0obs(:));
+    [~,X_hat_max] = odeRK_inhom_ufunc(order,M,Gobs,tspan_max,x0obs(:));
     serial_time_test = toc;
 
     fprintf(['      speedup = ',num2str(serial_time_test/serial_time_test),'\n'])
@@ -249,12 +266,12 @@ if test_ParaExp_end
     
     fprintf("    Computing ParaExp with dt max = 1/(2 10)... \n")
 
-    [X_hat_para_max_end,time_para_end_test] = ParaExp_end(p,tspan_max,M,Gobs,x0obs(:));
+    [X_hat_para_max_end,time_para_end_test] = ParaExp_end(order,p,tspan_max,M,Gobs,x0obs(:));
 
     fprintf("    Computing serial with dt max = 1/(2 10)... \n")
 
     tic;
-    [~,X_hat_max] = odeRK4_inhom_ufunc(M,Gobs,tspan_max,x0obs(:));
+    [~,X_hat_max] = odeRK_inhom_ufunc(order,M,Gobs,tspan_max,x0obs(:));
     serial_time_test = toc;
 
     fprintf(['      error ParaExp_end at end = ',num2str(norm(X_hat_para_max_end -  Solvetspan(X,tspan_max(end)))),'\n'])
@@ -344,7 +361,7 @@ for ti = 1:length(T_strategy_list)
     
             %----- ParaExp Solver
     
-            [X_hat_para_end_l,time_l] = ParExp_end(p,W_l,M,Gobs,x0obsp);
+            [X_hat_para_end_l,time_l] = ParaExp_end(order,p,W_l,M,Gobs,x0obsp);
             
             time_para = time_para + time_l; 
             

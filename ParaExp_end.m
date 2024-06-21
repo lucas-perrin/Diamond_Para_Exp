@@ -1,4 +1,4 @@
-function [X_para_end,time] = ParaExp_end(p,tspan,M,G,x0)
+function [X_para_end,time] = ParaExp_end(order,p,tspan,M,G,x0)
 
     times_T1 = zeros(1,p);
     times_T2 = zeros(1,p);
@@ -35,7 +35,7 @@ function [X_para_end,time] = ParaExp_end(p,tspan,M,G,x0)
         
     %----- Type 1
                 
-        [~,X_T1_p] = odeRK4_inhom_ufunc(M,G,time_interval,ini_zero);
+        [~,X_T1_p] = odeRK_inhom_ufunc(order,M,G,time_interval,ini_zero);
                 
         X_para(:,deb:fin) = X_para(:,deb:fin) + X_T1_p;
         
@@ -58,11 +58,8 @@ function [X_para_end,time] = ParaExp_end(p,tspan,M,G,x0)
         
     %----- Type 2
 
-        %[~,X_T2_p_end] = odeRK4_hom(M,time_interval_till_end_from_zero,x0p(:,iter));
-        %[~,X_T2_p_end] = odeRK4_inhom_ufunc(M,@(t) zeros(mx,1),time_interval_till_end_from_zero,x0p(:,iter));
         [X_T2_p_end] = expm(time_interval_till_end_from_zero(end).*M)*x0p(:,iter);
                 
-        %X_para(:,end) = X_para(:,end) + X_T2_p_end;
         X_para(:,end) = X_para(:,end) + X_T2_p_end(:,end);
 
         times_T2(p) = toc;
