@@ -66,8 +66,12 @@ function [X_para_end,time] = ParaExp_end(order,p,tspan,M,G,x0)
 
     end
 
+    tic
+
     X_para_end = X_para(:,end);
 
-    time = time + max(times_T1) + max(times_T2);
+    time=time+toc;    
+
+    time=time+max(times_T1)+max(times_T2);
 
 end
