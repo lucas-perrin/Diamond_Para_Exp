@@ -11,8 +11,6 @@
 clear all
 close all
 
-fontSize = 16;
-
 %===============================================================
 % if true, runs a loop to find the upper and lower bounds of the
 % nested grids 
@@ -29,6 +27,15 @@ test_ParaExp = false;
 test_ParaExp_end = false;
 % if true, display a review of the current during the strategy
 verbose = true;
+
+%===============================================================
+% graphics settings
+
+Fontsize = 18;
+Fontsize_label = 22;
+Fontsize_axes = 18;
+Linesize = 2;
+Marksize = 9;
 
 %===============================================================
 % Tunable parameters
@@ -137,7 +144,7 @@ if test_nested_grids
         fprintf("      i = %d \n",i)
         tspan_i = 0:dt_i:Tf;
         X_sol_i = Solvetspan(X,tspan_i);
-        [~,X_RK4_i] = odeRK_inhom_ufunc(order,A,G,tspan_i,x0(:));
+        [~,X_RK4_i] = odeRK_inhom(order,A,G,tspan_i,x0(:));
         error_end   = [error_end, norm(X_RK4_i(:,end)-X_sol_i(:,end))];
         error_tot   = [error_tot, sum(vecnorm(X_RK4_i - X_sol_i))];
         dt_s        = [dt_s, dt_i];
@@ -231,14 +238,14 @@ if test_obs_conv
 
     fprintf("    Computing serial with dt min = 1/(2^%i)... \n",min_pow_grid)
 
-    [~,X_hat_min] = odeRK_inhom_ufunc(order,M,Gobs,tspan_min,x0obs(:));
+    [~,X_hat_min] = odeRK_inhom(order,M,Gobs,tspan_min,x0obs(:));
 
     dt_max    = (1e-1)/(2^max_pow_grid);
     tspan_max = 0:dt_max:Tf;
 
     fprintf("    Computing serial with dt min = 1/(2^%i)... \n",max_pow_grid)
 
-    [~,X_hat_max] = odeRK_inhom_ufunc(order,M,Gobs,tspan_max,x0obs(:));
+    [~,X_hat_max] = odeRK_inhom(order,M,Gobs,tspan_max,x0obs(:));
 
     fprintf("    Plotting... \n")
 
@@ -266,7 +273,7 @@ if test_ParaExp
     fprintf("    Computing serial with dt max = 1/(2 10)... \n")
 
     tic;
-    [~,X_hat_max] = odeRK_inhom_ufunc(order,M,Gobs,tspan_max,x0obs(:));
+    [~,X_hat_max] = odeRK_inhom(order,M,Gobs,tspan_max,x0obs(:));
     serial_time_test = toc;
 
     fprintf(['      speedup = ',num2str(serial_time_test/serial_time_test),'\n'])
@@ -294,7 +301,7 @@ if test_ParaExp_end
     fprintf("    Computing serial with dt max = 1/(2^%i)... \n",max_pow_grid)
 
     tic;
-    [~,X_hat_max] = odeRK_inhom_ufunc(order,M,Gobs,tspan_max,x0obs(:));
+    [~,X_hat_max] = odeRK_inhom(order,M,Gobs,tspan_max,x0obs(:));
     serial_time_test = toc;
 
     fprintf(['      error ParaExp_end at end = ',num2str(norm(X_hat_para_max_end -  Solvetspan(X,tspan_max(end)))),'\n'])
@@ -313,7 +320,7 @@ dt_max    = (1e-1)/(2^max_pow_grid);
 tspan_max = 0:dt_max:Tf_strategy;
 nt_max    = length(tspan_max);
 
-[tspan_serial,X_hat_max,time_serial] = odeRK_inhom_ufunc_stop(order,M,Gobs,tspan_max,x0obs(:),toler_strategy,X_reshape);
+[tspan_serial,X_hat_max,time_serial] = odeRK_inhom_stopref(order,M,Gobs,tspan_max,x0obs(:),toler_strategy,X_reshape);
 
 fprintf("    t_end serial = %d \n",tspan_serial(end))
 

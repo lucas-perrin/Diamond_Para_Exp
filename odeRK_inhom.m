@@ -1,4 +1,4 @@
-function [tspan_bk,sol] = odeRK_inhom_ufunc(order,A,U,tspan,x0,toler)
+function [tspan_bk,sol] = odeRK_inhom(order,A,U,tspan,x0,toler)
 
 if (nargin < 6)
     null_toler = true;

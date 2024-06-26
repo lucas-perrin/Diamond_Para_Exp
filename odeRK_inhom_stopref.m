@@ -1,4 +1,4 @@
-function [tspan_bk,sol,time] = odeRK_inhom_ufunc_stop(order,A,U,tspan,x0,toler,ref)
+function [tspan_bk,sol,time] = odeRK_inhom_stopref(order,A,U,tspan,x0,toler,ref)
 
     time=0;
 
